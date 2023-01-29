@@ -1,0 +1,28 @@
+<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=windows-1251\"><title>ESP8266 Thermometer</title>
+	</head>
+	<body>
+		<h1> ESP8266 Thermometer</h1>
+		<p><a href="/index.html"><button>Назад</button></a></p>              
+		<p>Термостат 1: <input id="t1" value="">°C</p>
+		<p>Термостат 2: <input id="t2" value="">°C</p>
+		<button onclick=send()>Применить</button>
+		<p></p><p></p><p></p>
+		<p><a href="/reboot"><button>Reboot</button></a></p>		
+		<script type="text/javascript">
+			getstatus();
+			async function getstatus(){
+			let res=await fetch("/data");
+			if (res.ok){
+				let text=await res.text();
+				document.getElementById("t1").value=text.split(";")[3];
+				document.getElementById("t2").value=text.split(";")[4];
+				}
+			}
+			async function send(){
+			fetch("/trig", {
+			method: "POST",					
+			body: "1:"+document.getElementById("t1").value+" 2:"+document.getElementById("t2").value})
+			}
+		</script>
+	</body>
+</html>

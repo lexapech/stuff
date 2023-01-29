@@ -1,0 +1,60 @@
+<html><head>
+		<meta http-equiv="Content-Type" content="text/html; charset=windows-1251">
+		<title>ESP8266 Update</title>	
+		<style>
+		.outline {
+		border: 1px solid grey;
+		width: 380px;
+		padding: 10px;
+		}</style>
+	</head>
+	<body>	
+		<input id="file" type="file"></input>
+		<button onclick=send()>Submit</button>
+		<div class="outline" id="files"></div>
+		<a href="/reboot"><button>Reboot</button></a>
+		<script type="text/javascript">files();
+			async function files()
+				{
+				let res=await fetch("/files");
+					if (res.ok){
+						document.getElementById("files").innerHTML=await res.text();
+					}
+					else {document.getElementById("files").innerHTML=res.status;}
+				}
+		
+			async function send(){
+				var file = document.getElementById("file").files[0]
+				let reader = new FileReader();	
+				reader.readAsText(file);	
+				reader.onload = function() {
+					text=reader.result
+					if (text.length>512)
+					{
+						part1=text.slice(0,512)
+						part2=text.slice(512)
+						text=part2
+						fetch("/first", {
+						method: "POST",					
+						body: "name:\n"+file.name+"\nendname\ncontent:\n"+part1})
+						while (text.length>512){
+							part1=text.slice(0,512)
+							part2=text.slice(512)
+							text=part2
+							fetch("/part", {
+							method: "POST",					
+							body: "name:\n"+file.name+"\nendname\ncontent:\n"+part1})	
+					};
+							fetch("/part", {
+							method: "POST",					
+							body: "name:\n"+file.name+"\nendname\ncontent:\n"+text})	
+										
+					}
+					else
+					{
+						fetch("/first", {
+						method: "POST",					
+						body: "name:\n"+file.name+"\nendname\ncontent:\n"+text})
+					}
+					
+					}}</script></body></html>                 

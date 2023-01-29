@@ -1,0 +1,47 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=windows-1251">
+		<title>ESP8266 Thermometer</title>		
+	</head>
+	<body> 
+		<h1> ESP8266 Thermometer</h1>
+		<p id="temp1">Температура 1: ожидание... °C</p>
+		<p id="uptime">Время работы: 0 мин</p>        
+		<p>Состояние выхода 1: <font id="out1" size="5" color="red" face="Arial">Выключен</font></p>                                                                                                                  
+		<p>Состояние выхода 2: <font id="out2" size="5" color="red" face="Arial">Выключен</font></p>
+		<p><a href="/settings.html"><button>Настройки</button></a></p>   
+		<script type="text/javascript">
+			getstatus()			
+			async function getstatus(){
+				let res=await fetch("/data");
+					if (res.ok){
+						let text=innerHTML=await res.text();
+						document.getElementById("temp1").innerHTML="Температура: "+text.split(";")[0]+"°C";
+						document.getElementById("uptime").innerHTML="Время работы: "+text.split(";")[5]+" мин";
+				if (text.split(";")[1]=="0")
+				{
+					document.getElementById("out1").color="red";	
+					document.getElementById("out1").innerHTML="Выключен";	
+				}
+				else
+				{
+					document.getElementById("out1").color="green";	
+					document.getElementById("out1").innerHTML="Включен";	
+				}
+				if (text.split(";")[2]=="0")
+				{
+					document.getElementById("out2").color="red";	
+					document.getElementById("out2").innerHTML="Выключен";	
+				}
+				else
+				{
+					document.getElementById("out2").color="green";	
+					document.getElementById("out2").innerHTML="Включен";	
+				}
+					}
+					else {document.getElementById("temp1").innerHTML=res.status;}
+				
+				}
+		</script>
+	</body> 
+</html> 
