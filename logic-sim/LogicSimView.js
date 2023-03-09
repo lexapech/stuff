@@ -69,12 +69,15 @@ export default class LogicSimView {
         this.ctx.fillRect(element.pos.x - elementSize.width/2,element.pos.y - elementSize.height/2,
             elementSize.width,elementSize.height)
         this.ctx.fillStyle="black"
-        this.ctx.fillText(element.type.toString().toUpperCase(),element.pos.x,element.pos.y,elementSize.width)
+        if(element.type!=='bar')
+            this.ctx.fillText(element.type.toString().toUpperCase(),element.pos.x,element.pos.y,elementSize.width)
 
-        this.drawPort(element.getOutputPortPos(),this.controller.portSize)
-
-        let ports = element.getInputPortsPos()
-        ports.forEach(port=>{
+        let outputs = element.getOutputPortsPos()
+        outputs.forEach(port=>{
+            this.drawPort(port,this.controller.portSize)
+        })
+        let inputs = element.getInputPortsPos()
+        inputs.forEach(port=>{
             this.drawPort(port,this.controller.portSize)
         })
     }

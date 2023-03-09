@@ -1,10 +1,11 @@
 import Port from "./Port.js";
 import Element from "./Element.js";
 export default class LogicSimCore {
-    constructor(portSize) {
+    constructor(portSize,editorMode) {
         this.portSize = portSize;
         this.elements = []
         this.wires=[]
+        this.editorMode = editorMode
     }
 
     addElement(element){
@@ -51,14 +52,12 @@ export default class LogicSimCore {
             console.error("element not found")
             return {x:0,y:0}
         }
-        let inputs = element.getInputPortsPos()
-        let output = element.getOutputPortPos()
-        if(port.type==="output") return output
-        return inputs[port.id]
+        if(port.type==="output") return element.getOutputPortsPos()[port.id]
+        return element.getInputPortsPos()[port.id]
     }
 
     getElementNearPos(pos) {
-        return this.elements.reverse().find(e=>{
+        return this.elements.slice().reverse().find(e=>{
             let size = e.getSize()
             let tl = {x:e.pos.x - size.width/2 - this.portSize,y:e.pos.y-size.height/2}
             let br = {x:e.pos.x + size.width/2 + this.portSize,y:e.pos.y+size.height/2}
@@ -68,24 +67,17 @@ export default class LogicSimCore {
 
     getPortAtPos(element,pos) {
         let inputs = element.getInputPortsPos()
-        let output = element.getOutputPortPos()
-        let type = undefined
-        let id = undefined
-        if (Math.abs(inputs[0].x-pos.x)<=this.portSize && Math.abs(inputs[0].y-pos.y)<=this.portSize){
-            type="input"
-            id=0
+        let outputs = element.getOutputPortsPos()
+        for(let i=0;i<inputs.length;i++){
+            if (Math.abs(inputs[i].x-pos.x)<=this.portSize && Math.abs(inputs[i].y-pos.y)<=this.portSize){
+                return new Port(element,"input",i)
+            }
         }
-        else if(inputs[1] && Math.abs(inputs[1].x-pos.x)<=this.portSize && Math.abs(inputs[1].y-pos.y)<=this.portSize){
-            type="input"
-            id=1
+        for(let i=0;i<outputs.length;i++){
+            if (Math.abs(outputs[i].x-pos.x)<=this.portSize && Math.abs(outputs[i].y-pos.y)<=this.portSize){
+                return new Port(element,"output",i)
+            }
         }
-        else if (Math.abs(output.x-pos.x)<=this.portSize && Math.abs(output.y-pos.y)<=this.portSize){
-            type="output"
-            id=0
-        }
-        if(type)
-            return new Port(element,type,id)
-        else
             return undefined
     }
 
@@ -98,7 +90,8 @@ export default class LogicSimCore {
     }
 
     canConnect(wire,port) {
-        if(!port.element.draggable) return false
+        if(this.editorMode) return true
+        if(!port.element.draggable && port.element.type!=='bar') return false
         if(wire.startPort.type===port.type) return false
         if(port.type==="output") return true
         let connected = this.wires.find(w=>{

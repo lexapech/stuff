@@ -7,11 +7,23 @@ export default class Element{
         this.draggable = draggable
     }
 
+    initPortBar(type,width,height,ports){
+        this.draggable = false;
+        this.type = 'bar'
+        this.name = type+'_bar'
+        this.width = width
+        this.portType = type
+        this.height = height
+        this.portCount = ports
+    }
+
     getSize(){
-        if(this.type!=='not')
-            return {width: 160, height: 80}
-        else {
+        if(this.type==='not')
             return {width: 160, height: 40}
+        else if(this.type==='bar')
+            return {width: this.width,height: this.height}
+        else {
+            return {width: 160, height: 80}
         }
     }
 
@@ -24,28 +36,61 @@ export default class Element{
     }
 
     getInputPortCount() {
-        if(this.type!=='not')
-            return 2;
-        else {
+        if(this.type==='not')
             return 1;
+        else if(this.type==='bar')
+            return this.portCount
+        else {
+            return 2;
         }
     }
     getInputPortsPos(){
-        let iPorts = this.getInputPortCount()
-        let elementSize = this.getSize()
-        if(iPorts===1){
-            return [{x: this.pos.x-elementSize.width/2,y: this.pos.y}]
+        if(this.type==='bar' && (this.portType==='output' || this.portType==='common')) return []
+        if(this.type==='bar' && (this.portType==='input' )) {
+            let dy = this.height / this.portCount
+            let center = dy * Math.floor(this.portCount / 2)
+            if (this.portCount % 2 === 0)
+                center = dy * (Math.floor(this.portCount / 2) - 0.5)
+            let shift = this.height / 2 - center
+            let ports = []
+
+
+            for (let i=0;i<this.portCount;i++){
+                ports.push({x: this.pos.x - this.width / 2, y: this.pos.y - this.height / 2 + i*dy +shift})
+            }
+            return ports
         }
         else {
-            return [
-                {x: this.pos.x - elementSize.width/2, y: this.pos.y - elementSize.height/4},
-                {x: this.pos.x - elementSize.width/2, y: this.pos.y + elementSize.height/4}
-            ]
+            let iPorts = this.getInputPortCount()
+            let elementSize = this.getSize()
+            if (iPorts === 1) {
+                return [{x: this.pos.x - elementSize.width / 2, y: this.pos.y}]
+            } else {
+                return [
+                    {x: this.pos.x - elementSize.width / 2, y: this.pos.y - elementSize.height / 4},
+                    {x: this.pos.x - elementSize.width / 2, y: this.pos.y + elementSize.height / 4}
+                ]
+            }
         }
     }
 
-    getOutputPortPos(){
+    getOutputPortsPos(){
+        if(this.type==='bar' && (this.portType==='input')) return []
+        if(this.type==='bar' && (this.portType==='output' || this.portType==='common')) {
+            let dy = this.height / this.portCount
+            let center = dy * Math.floor(this.portCount / 2)
+            if (this.portCount % 2 === 0)
+                center = dy * (Math.floor(this.portCount / 2) - 0.5)
+            let shift = this.height / 2 - center
+            let ports = []
+            let output = 1
+            if(this.portType==='common') output = 0
+            for (let i=0;i<this.portCount;i++){
+                ports.push({x: this.pos.x + output*(this.width / 2), y: this.pos.y - this.height / 2 + i*dy +shift})
+            }
+            return ports
+        }
         let elementSize = this.getSize()
-        return {x: this.pos.x+elementSize.width/2,y: this.pos.y}
+        return [{x: this.pos.x+elementSize.width/2,y: this.pos.y}]
     }
 }

@@ -13,6 +13,7 @@ class LogicSim{
         canvasParent.appendChild(this.canvas);
 
         this.portSize = 8;
+        this.editorMode=true
 
         this.view = new LogicSimView(this);
         this.toolbar = new Toolbar(this.view.width,this.view.height,100,this.portSize)
@@ -20,12 +21,20 @@ class LogicSim{
         this.toolbar.addElement('and')
         this.toolbar.addElement('or')
 
-        this.core = new LogicSimCore(this.portSize)
+        this.core = new LogicSimCore(this.portSize,this.editorMode)
         this.initMouse()
-
-        this.core.addElement(new Element('not','not1',{x:100,y:100},false))
-        this.core.addElement(new Element('and','and1',{x:400,y:100},false))
+        this.addBar(this.view.width-50/2,'input',50,3)
+        this.addBar(50/2,'output',50,3)
+        this.addBar(this.view.width/2,'common',5,3)
+        //this.core.addElement(new Element('not','not1',{x:100,y:100},false))
+        //this.core.addElement(new Element('and','and1',{x:400,y:100},false))
         this.update()
+    }
+
+    addBar(x,type,width,ports){
+        let bar = new Element('bar','',{x:x,y:(this.view.height-this.toolbar.toolbarHeight)/2},false)
+        bar.initPortBar(type,width,this.view.height-this.toolbar.toolbarHeight,ports)
+        this.core.addElement(bar)
     }
 
     initMouse(){
@@ -52,13 +61,17 @@ class LogicSim{
         if(element) {
             let port = this.core.getPortAtPos(element,pos)
 
-            if(port && port.element.draggable) {
-                let connected = this.core.getConnectedWire(port)
-                if(connected) {
-                    this.grabConnectedWire(connected,pos)
-                }
-                else{
-                    this.grabbedWire = this.core.addWire(new Wire(port,{type:'mouse',pos:pos}))
+            if(port) {
+                if(port.element.draggable ||
+                  (port.element.type==='bar' &&
+                  (this.editorMode || port.element.portType==='input'))) {
+                    let connected = this.core.getConnectedWire(port)
+                    if (connected) {
+                        this.grabConnectedWire(connected, pos)
+                    } else {
+                        this.grabbedWire = this.core.addWire(new Wire(port, {type: 'mouse', pos: pos}))
+                        console.log('new wire')
+                    }
                 }
             }
             else if(element.canDrag(pos)) {
@@ -120,6 +133,7 @@ class LogicSim{
             let t = this.grabbedWire.endPort;
             this.grabbedWire.endPort = this.grabbedWire.startPort;
             this.grabbedWire.startPort = t;
+            console.log('connected')
         }
         this.grabbedWire = undefined
     }
