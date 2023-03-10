@@ -8,6 +8,11 @@ export default class LogicSimCore {
         this.editorMode = editorMode
     }
 
+    clear(){
+        this.elements = []
+        this.wires=[]
+    }
+
     addElement(element){
         this.elements.push(element)
     }

@@ -12,23 +12,46 @@ class LogicSim{
         this.canvas = document.createElement('canvas');
         canvasParent.appendChild(this.canvas);
 
+
+        let toolBarHeight = 100
         this.portSize = 8;
         this.editorMode=true
 
+        this.circuit=undefined
+
         this.view = new LogicSimView(this);
-        this.toolbar = new Toolbar(this.view.width,this.view.height,100,this.portSize)
+
+        this.resetButton = this.createButtons(toolBarHeight,canvasParent)
+        this.toolbar = new Toolbar(this.view.width*0.7,this.view.height,toolBarHeight,this.portSize)
         this.toolbar.addElement('not')
         this.toolbar.addElement('and')
         this.toolbar.addElement('or')
 
         this.core = new LogicSimCore(this.portSize,this.editorMode)
         this.initMouse()
-        this.addBar(this.view.width-50/2,'input',50,3)
-        this.addBar(50/2,'output',50,3)
-        this.addBar(this.view.width/2,'common',5,3)
+        this.loadCircuit(this.circuit)
         //this.core.addElement(new Element('not','not1',{x:100,y:100},false))
         //this.core.addElement(new Element('and','and1',{x:400,y:100},false))
-        this.update()
+
+    }
+
+    createButtons(toolBarHeight,parent){
+        let buttons = document.createElement('div');
+        parent.appendChild(buttons);
+        buttons.style.position="absolute";
+        buttons.style.padding="10px";
+        buttons.style.display="flex";
+
+        buttons.style.left="70%";
+        buttons.innerHTML=`
+            <button id="logic-sim-reset-button">CБРОС</button>
+            <button id="logic-sim-previous-button">предыдущий входной набор</button>
+            <button id="logic-sim-next-button">следующий входной набор</button>`
+        buttons.style.top=`${this.view.height-toolBarHeight/2 - buttons.clientHeight/2}px`;
+        document.querySelector('#logic-sim-reset-button').addEventListener('click',(e)=>this.resetButtonPressed(e))
+        document.querySelector('#logic-sim-previous-button').addEventListener('click',(e)=>this.previousButtonPressed(e))
+        document.querySelector('#logic-sim-next-button').addEventListener('click',(e)=>this.nextButtonPressed(e))
+        return buttons
     }
 
     addBar(x,type,width,ports){
@@ -37,6 +60,24 @@ class LogicSim{
         this.core.addElement(bar)
     }
 
+    loadCircuit(circuit){
+        this.addBar(this.view.width-50/2,'input',50,3)
+        this.addBar(50/2,'output',50,3)
+        this.addBar(this.view.width/2,'common',5,3)
+        this.update()
+    }
+
+    resetButtonPressed(e){
+        console.log("circuit resetted")
+        this.core.clear()
+        this.loadCircuit(this.circuit)
+    }
+    previousButtonPressed(e){
+
+    }
+    nextButtonPressed(e){
+
+    }
     initMouse(){
         this.mousePressed = false
         this.canvas.addEventListener("mousedown",(e)=>this.mouseDown(e))
@@ -82,7 +123,8 @@ class LogicSim{
 
     mousePressOnToolbar(pos){
         let element = this.toolbar.getElementNearPos(pos)
-        this.grabbedElement = this.core.addElementFromTemplate(element)
+        if(element)
+            this.grabbedElement = this.core.addElementFromTemplate(element)
     }
 
     mouseDown(e){
@@ -116,7 +158,7 @@ class LogicSim{
     releaseGrabbedElement(pos){
         this.core.elements = this.core.elements.filter(x => x !== this.grabbedElement)
         //this.core.elements.push(Object.assign( {},this.grabbedElement))
-        if(!this.isOverToolbar(pos))
+        if(!this.isOverToolbar(this.grabbedElement.pos))
             this.core.elements.push(this.grabbedElement)
         else {
             this.core.removeWires(this.grabbedElement)
