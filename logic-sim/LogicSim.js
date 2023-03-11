@@ -9,7 +9,7 @@ import circuits from "./Circuits.js";
 
 export default class LogicSim{
 
-    constructor(id,testCallback) {
+    constructor(id,testCallback,editorMode) {
         console.log("start")
         this.testCallback = testCallback
         let canvasParent = document.querySelector(id);
@@ -19,7 +19,7 @@ export default class LogicSim{
 
         let toolBarHeight = 100
         this.portSize = 8;
-        this.editorMode=false
+        this.editorMode=!!editorMode
 
         this.circuit=circuits[0]
         this.testSetIndex = 0

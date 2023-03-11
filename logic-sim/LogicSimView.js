@@ -74,17 +74,18 @@ export default class LogicSimView {
         this.ctx.stroke();
     }
 
+    getElementColor(element) {
+        return (element.draggable || element.name==='toolbar' || element.type==='bar')?"lightgray":"gray"
+    }
+
     drawElement(element) {
-        this.ctx.fillStyle="lightgray"
+        this.ctx.fillStyle = this.getElementColor(element)
         let elementSize = element.getSize()
         this.ctx.fillRect(element.pos.x - elementSize.width/2,element.pos.y - elementSize.height/2,
             elementSize.width,elementSize.height)
         this.ctx.fillStyle="black"
         if(element.type!=='bar')
             this.ctx.fillText(element.type.toString().toUpperCase(),element.pos.x,element.pos.y,elementSize.width)
-
-
-
     }
 
     drawPort(port){
