@@ -37,19 +37,30 @@ export default class LogicSimView {
                 this.drawElement(element)
         })
     }
+    drawPorts(elements,grabbedElement){
+        elements.forEach(element=>{
+            if(element!==grabbedElement) {
+                let ports = element.getPorts()
+                ports.forEach(port => this.drawPort(port))
+            }
+
+        })
+    }
 
     drawToolbar(toolbar){
         this.ctx.fillStyle="gray";
         this.ctx.fillRect(0,this.height - toolbar.toolbarHeight, this.width,toolbar.toolbarHeight);
         toolbar.elements.forEach(x=>{
             this.drawElement(x)
+            let ports = x.getPorts()
+            ports.forEach(port => this.drawPort(port))
         })
 
     }
     drawWires(wires){
         wires.forEach(wire=> {
-            this.drawWire(this.controller.core.getPortPos(wire.startPort),
-                          this.controller.core.getPortPos(wire.endPort))
+            this.drawWire(wire.startPort.getPos(),
+                          wire.endPort.getPos())
 
         })
     }
@@ -72,21 +83,19 @@ export default class LogicSimView {
         if(element.type!=='bar')
             this.ctx.fillText(element.type.toString().toUpperCase(),element.pos.x,element.pos.y,elementSize.width)
 
-        let outputs = element.getOutputPortsPos()
-        outputs.forEach(port=>{
-            this.drawPort(port,this.controller.portSize)
-        })
-        let inputs = element.getInputPortsPos()
-        inputs.forEach(port=>{
-            this.drawPort(port,this.controller.portSize)
-        })
+
+
     }
 
-    drawPort(pos,size){
+    drawPort(port){
+        let pos = port.getPos()
         this.ctx.fillStyle="black"
         this.ctx.beginPath();
-        this.ctx.arc(pos.x-1, pos.y, size, 0, 2 * Math.PI);
+        this.ctx.arc(pos.x, pos.y, port.size, 0, 2 * Math.PI);
         this.ctx.fill();
+        this.ctx.fillStyle="white"
+        if(port.element.type==='bar' && port.type !=="common")
+            this.ctx.fillText(port.element.portValues[port.id].toString(), pos.x, pos.y - pos.y%2 + 2, port.size)
     }
 
 }
