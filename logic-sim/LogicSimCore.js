@@ -16,8 +16,6 @@ export default class LogicSimCore {
         }
     }
 
-
-
     constructor(portSize, editorMode) {
         this.portSize = portSize;
         this.elements = []
@@ -172,16 +170,23 @@ export default class LogicSimCore {
             display = true
         }
         let circuit = this.generateCircuit(inputValues)
-        const simulationResult = circuit.simulate();
-        let outputValues = Array(inputValues.length).fill('0').map((x,i)=>{
-            return simulationResult.state[`O${i}`][0]
-        })
-        outputValues = outputValues.map(v=>(+(!!v)).toString())
-        if(display) {
-            let outputs = this.elements.find(element => element.name === "input_bar")
-            outputs.portValues = outputValues
+        try {
+            const simulationResult = circuit.simulate();
+            let outputValues = Array(inputValues.length).fill('0').map((x, i) => {
+                return simulationResult.state[`O${i}`][0]
+            })
+            if (display) {
+                let outputs = this.elements.find(element => element.name === "input_bar")
+                outputs.portValues = outputValues.map(v => (+(!!v)).toString())
+            }
+            outputValues = outputValues.map(v => v !== undefined ? (+v).toString() : "undefined")
+            return outputValues.every((v, i) => v === inputValues[i])
         }
-        return outputValues.every((v,i)=>v === inputValues[i])
+        catch (e) {
+
+            return false
+        }
+
     }
 
 }

@@ -257,6 +257,7 @@ export default class LogicSim{
         }
         this.dragStartPos = undefined
         this.grabbedElement = undefined
+        this.update()
     }
     releaseGrabbedWire(){
         this.core.wires = this.core.wires.filter(x=>x!==this.grabbedWire)
