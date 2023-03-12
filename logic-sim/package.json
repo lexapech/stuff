@@ -1,0 +1,7 @@
+{
+  "name": "logic-sim",
+  "version": "1.0.0",
+  "dependencies": {
+    "logic-circuit-sim": "^1.0.0"
+  }
+}
