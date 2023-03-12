@@ -9,24 +9,22 @@ import circuits from "./Circuits.js";
 
 export default class LogicSim{
 
-    constructor(id,circuitIndex,testCallback,editorMode) {
-        console.log("start")
+    constructor(container,circuitIndex,testCallback,editorMode) {
         this.testCallback = testCallback
-        let canvasParent = document.querySelector(id);
+        this.canvasParent = container;
         this.canvas = document.createElement('canvas');
-        canvasParent.appendChild(this.canvas);
+        this.canvasParent.appendChild(this.canvas);
 
-
-        let toolBarHeight = 100
-        this.portSize = 8;
+        let toolBarHeight = 150
+        this.portSize = 12;
         this.editorMode=!!editorMode
 
         this.circuit=circuits[circuitIndex]
         this.testSetIndex = 0
         this.view = new LogicSimView(this);
 
-        this.createButtons(toolBarHeight,canvasParent)
-        this.toolbar = new Toolbar(this.view.width*0.7, this.view.height, toolBarHeight, this.portSize)
+        this.createButtons(toolBarHeight, this.canvasParent)
+        this.toolbar = new Toolbar(this.view.width * 0.5, this.view.height, toolBarHeight, this.portSize)
         this.toolbar.addElement('not')
         this.toolbar.addElement('and')
         this.toolbar.addElement('or')
@@ -34,9 +32,6 @@ export default class LogicSim{
         this.core = new LogicSimCore(this.portSize,this.editorMode)
         this.initMouse()
         this.loadCircuit(this.circuit)
-
-        //this.core.addElement(new Element('not','not1',{x:100,y:100},false))
-        //this.core.addElement(new Element('and','and1',{x:400,y:100},false))
 
     }
 
@@ -46,19 +41,71 @@ export default class LogicSim{
         buttons.style.position="absolute";
         buttons.style.padding="10px";
         buttons.style.display="flex";
+        buttons.style.height = "10%";
 
-        buttons.style.left="70%";
+        buttons.style.left="55%";
         buttons.innerHTML=`
-            <button id="logic-sim-reset-button">CБРОС</button>
-            <button id="logic-sim-previous-button">предыдущий входной набор</button>
-            <button id="logic-sim-next-button">следующий входной набор</button>`
+            <button id="logic-sim-reset-button" 
+                    style="border: none;
+                            width: 40%; 
+                            height: 90px; 
+                            margin: 0 10px; 
+                            font-family: 'Rubik', sans-serif;
+                            font-style: normal;
+                            font-weight: 500;
+                            font-size: 22px;
+                            line-height: 20px;
+                            text-align: center;
+                            color: #FFFFFF;
+                            background: #2592AA;
+                            border-radius: 12px;">
+                    сброс результата
+            </button>
+            <button id="logic-sim-previous-button" 
+                    style="width: 40%; 
+                            height: 90px; 
+                            margin: 0 10px;
+                            border: none;
+                            font-family: 'Rubik', sans-serif;
+                            font-style: normal;
+                            font-weight: 500;
+                            font-size: 22px;
+                            line-height: 20px;
+                            text-align: center;
+                            color: #FFFFFF;
+                            background: #2592AA;
+                            border-radius: 12px;">
+                    предыдущий входной набор
+            </button>
+            <button id="logic-sim-next-button" 
+                    style="width: 40%; 
+                            height: 90px; 
+                            margin: 0 40px 0 10px;
+                            border: none;
+                            font-family: 'Rubik', sans-serif;
+                            font-style: normal;
+                            font-weight: 500;
+                            font-size: 22px;
+                            line-height: 20px;
+                            text-align: center;
+                            color: #FFFFFF;
+                            background: #2592AA;
+                            border-radius: 12px;">
+                    следующий входной набор
+            </button>`
         if(this.editorMode===true){
             buttons.innerHTML+=`<button id="logic-sim-save-button">сохранить</button>`
         }
         buttons.style.top=`${this.view.height-toolBarHeight/2 - buttons.clientHeight/2}px`;
         document.querySelector('#logic-sim-reset-button').addEventListener('click',(e)=>this.resetButtonPressed(e))
+        document.querySelector('#logic-sim-reset-button').addEventListener('mouseup',(e)=>this.mouseUp(e))
+        document.querySelector('#logic-sim-reset-button').addEventListener('mousemove',(e)=>this.mouseMove(e))
         document.querySelector('#logic-sim-previous-button').addEventListener('click',(e)=>this.previousButtonPressed(e))
+        document.querySelector('#logic-sim-previous-button').addEventListener('mouseup',(e)=>this.mouseUp(e))
+        document.querySelector('#logic-sim-previous-button').addEventListener('mousemove',(e)=>this.mouseMove(e))
         document.querySelector('#logic-sim-next-button').addEventListener('click',(e)=>this.nextButtonPressed(e))
+        document.querySelector('#logic-sim-next-button').addEventListener('mouseup',(e)=>this.mouseUp(e))
+        document.querySelector('#logic-sim-next-button').addEventListener('mousemove',(e)=>this.mouseMove(e))
         if(this.editorMode===true) {
             document.querySelector('#logic-sim-save-button').addEventListener('click', (e) => this.saveButtonPressed(e))
         }
@@ -111,8 +158,7 @@ export default class LogicSim{
         return Array(this.circuit.ports - str.length).fill("0").concat([...str])
     }
 
-    resetButtonPressed(){
-        console.log("circuit cleared")
+    resetButtonPressed(e){
         this.core.clear()
         this.loadCircuit(this.circuit)
     }
@@ -129,7 +175,7 @@ export default class LogicSim{
         this.update(true)
     }
     saveButtonPressed(){
-        console.log(JSON.stringify(this.core.elements.filter(e=>e.type!=="bar").map(element=>{
+        const text = this.circuit.ports + " ---------- TASK --------------\n" + JSON.stringify(this.core.elements.filter(e=>e.type!=="bar").map(element=>{
             return {
                 name: element.name,
                 type: element.type,
@@ -138,8 +184,7 @@ export default class LogicSim{
                     y: element.pos.y / this.view.height
                 }
             }
-        })))
-        console.log(JSON.stringify(this.core.wires.map(wire => {
+        })) + "\n-------------\n" + JSON.stringify(this.core.wires.map(wire => {
             return {
                 startPort:{
                     element:wire.startPort.element.name,
@@ -152,7 +197,9 @@ export default class LogicSim{
                     id:wire.endPort.id
                 }
             }
-        })))
+        })) + "\n--------END---------"
+
+        navigator.clipboard.writeText(text).then(() => alert("Задание скопировано, нажмите пкм --> вставить"))
     }
 
     initMouse(){
@@ -160,6 +207,7 @@ export default class LogicSim{
         this.canvas.addEventListener("mousedown",(e)=>this.mouseDown(e))
         this.canvas.addEventListener("mousemove",(e)=>this.mouseMove(e))
         this.canvas.addEventListener("mouseup",(e)=>this.mouseUp(e))
+        this.canvasParent.addEventListener("mouseleave",(e)=>this.mouseUp(e))
     }
     getCanvasCoordinates(pos) {
         let canvasBox = this.canvas.getBoundingClientRect()
@@ -191,7 +239,6 @@ export default class LogicSim{
                         let mousePort = new Port(undefined,'mouse',0)
                         mousePort.pos = pos
                         this.grabbedWire = this.core.addWire(new Wire(port, mousePort))
-                        console.log('new wire')
                     }
                 }
             }
@@ -269,7 +316,6 @@ export default class LogicSim{
             let t = this.grabbedWire.endPort;
             this.grabbedWire.endPort = this.grabbedWire.startPort;
             this.grabbedWire.startPort = t;
-            console.log('connected')
         }
         this.grabbedWire = undefined
     }

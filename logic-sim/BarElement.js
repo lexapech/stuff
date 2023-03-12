@@ -13,6 +13,7 @@ export default class BarElement{
         this.portSize = portSize
         this.ports=[]
         this.portValues=Array(portCount).fill(0)
+        this.portValid=Array(portCount).fill(0)
     }
 
     getSize(){
