@@ -175,9 +175,14 @@ export default class LogicSimCore {
             let outputValues = Array(inputValues.length).fill('0').map((x, i) => {
                 return simulationResult.state[`O${i}`][0]
             })
+            let commonValues = Array(inputValues.length).fill('0').map((x, i) => {
+                return simulationResult.state[`C${i}`][0]
+            })
             if (display) {
                 let outputs = this.elements.find(element => element.name === "input_bar")
                 outputs.portValues = outputValues.map(v => (+(!!v)).toString())
+                let common = this.elements.find(element => element.name === "common_bar")
+                common.portValues = commonValues.map(v => (+(!!v)).toString())
             }
             outputValues = outputValues.map(v => v !== undefined ? (+v).toString() : "undefined")
             return outputValues.every((v, i) => v === inputValues[i])

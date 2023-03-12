@@ -95,7 +95,7 @@ export default class LogicSimView {
         this.ctx.arc(pos.x, pos.y, port.size, 0, 2 * Math.PI);
         this.ctx.fill();
         this.ctx.fillStyle="white"
-        if(port.element.type==='bar' && port.type !=="common")
+        if(port.element.type==='bar')
             this.ctx.fillText(port.element.portValues[port.id].toString(), pos.x, pos.y - pos.y%2 + 2, port.size)
     }
 
