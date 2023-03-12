@@ -2,7 +2,7 @@
 export default class LogicSimView {
     constructor(controller) {
         this.controller = controller
-        this.wireWidth = 2;
+        this.wireWidth = 6;
         this.initCanvas(controller.canvas)
     }
 
@@ -22,14 +22,19 @@ export default class LogicSimView {
             this.ctx.fillStyle="black";
             this.ctx.textAlign="center"
             this.ctx.textBaseline="middle"
-            this.ctx.font = "24px serif";
+            this.ctx.fillStyle="white";
+            this.ctx.font = "bold 20px Rubik, sans-serif";
 
         }
 
     }
 
     clear(){
-        this.ctx.clearRect(0,0,this.width,this.height)
+        this.ctx.fillStyle="#8FD9DE";
+        this.ctx.fillRect(0,0,this.width,this.height);
+        this.ctx.fillStyle = "#ACE9ED";
+        this.ctx.fillRect(this.width/2, 0, this.width, this.height);
+
     }
     drawElements(elements,grabbedElement){
         elements.forEach(element=>{
@@ -48,8 +53,8 @@ export default class LogicSimView {
     }
 
     drawToolbar(toolbar){
-        this.ctx.fillStyle="gray";
-        this.ctx.fillRect(0,this.height - toolbar.toolbarHeight, this.width,toolbar.toolbarHeight);
+        this.ctx.fillStyle="#68BAC6";
+        this.ctx.fillRect(0,this.height - toolbar.toolbarHeight, this.width, toolbar.toolbarHeight);
         toolbar.elements.forEach(x=>{
             this.drawElement(x)
             let ports = x.getPorts()
@@ -58,45 +63,68 @@ export default class LogicSimView {
 
     }
     drawWires(wires){
-        wires.forEach(wire=> {
-            this.drawWire(wire.startPort.getPos(),
-                          wire.endPort.getPos())
-
-        })
+        wires.forEach(wire=>this.drawWire(wire))
     }
 
-    drawWire(start,end){
+    drawWire(wire){
+        let start = wire.startPort.getPos();
+        let end =  wire.endPort.getPos()
         this.ctx.beginPath();
         this.ctx.moveTo(start.x, start.y);
         this.ctx.lineTo(end.x, end.y);
-        this.ctx.lineWidth=this.wireWidth
-        this.ctx.strokeStyle="black"
+        this.ctx.lineWidth=this.wireWidth;
+        if(wire.active) this.ctx.strokeStyle="yellow"
+        else {
+            if (wire.startPort.element.draggable || wire.startPort.type==="common" || wire.startPort.element.name==="input_bar") this.ctx.strokeStyle = "white";
+            else this.ctx.strokeStyle = "#1A768A"
+        }
         this.ctx.stroke();
     }
 
     getElementColor(element) {
-        return (element.draggable || element.name==='toolbar' || element.type==='bar')?"lightgray":"gray"
+        if (element.draggable) return "#C199D3";
+        if(element.name === "output_bar") {
+            return "#8FD9DE"
+        }
+        else if(element.name === "input_bar"){
+            return "#ACE9ED"
+        }
+        else if(element.name === "common_bar"){
+            return "#8FD9DE"
+        }
+        else {
+            return "#9772AB"
+        }
     }
 
     drawElement(element) {
         this.ctx.fillStyle = this.getElementColor(element)
         let elementSize = element.getSize()
         this.ctx.fillRect(element.pos.x - elementSize.width/2,element.pos.y - elementSize.height/2,
-            elementSize.width,elementSize.height)
-        this.ctx.fillStyle="black"
-        if(element.type!=='bar')
+            elementSize.width,elementSize.height);
+        this.ctx.fillStyle="white";
+        if(element.type!=='bar'){
             this.ctx.fillText(element.type.toString().toUpperCase(),element.pos.x,element.pos.y,elementSize.width)
+        }
     }
 
     drawPort(port){
         let pos = port.getPos()
-        this.ctx.fillStyle="black"
+        if (port.element.type === 'bar') {
+            this.ctx.fillStyle = "#1A768A";
+            if(port.type==="input" && !port.element.portValid[port.id])
+                this.ctx.fillStyle = "#FF768A";
+        }
+        else if (port.element.draggable) this.ctx.fillStyle = "#A04899";
+        else this.ctx.fillStyle="#71416C";
         this.ctx.beginPath();
         this.ctx.arc(pos.x, pos.y, port.size, 0, 2 * Math.PI);
         this.ctx.fill();
-        this.ctx.fillStyle="white"
-        if(port.element.type==='bar')
+        this.ctx.fillStyle="white";
+        this.ctx.border = "5px solid red";
+        if(port.element.type==='bar'){
             this.ctx.fillText(port.element.portValues[port.id].toString(), pos.x, pos.y - pos.y%2 + 2, port.size)
+        }
     }
 
 }

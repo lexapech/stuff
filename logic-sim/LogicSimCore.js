@@ -21,7 +21,7 @@ export default class LogicSimCore {
         this.elements = []
         this.wires = []
         this.editorMode = editorMode
-
+        this.simulationResult = undefined
     }
 
     clear(){
@@ -59,6 +59,11 @@ export default class LogicSimCore {
     }
 
     addWire(wire){
+        if(this.simulationResult && wire.startPort.type!=="input") {
+            let names = this.mapWireElementNames(wire)
+            if(names.outId && names.outName)
+                wire.active = this.simulationResult.state[names.outName][names.outId]
+        }
         this.wires.push(wire)
         return wire
     }
@@ -118,11 +123,43 @@ export default class LogicSimCore {
         bar.portValues = value
     }
 
+    mapWireElementNames(wire){
+        let outName = wire.startPort.element.name
+        let outId = wire.startPort.id
+        if(outName==="output_bar"){
+            outName = `I${wire.startPort.id}`
+            outId = 0
+        }
+        else if(outName==="common_bar"){
+            outName = `C${wire.startPort.id}`
+            outId = 0
+        }
+        let inName
+        let inId
+        if(wire.endPort.element) {
+            inName = wire.endPort.element.name
+            inId = wire.endPort.id
+
+            if (inName === "input_bar") {
+                inName = `O${wire.endPort.id}`
+                inId = 0
+            } else if (inName === "common_bar") {
+                inName = `C${wire.endPort.id}`
+                inId = 0
+            }
+        }
+        return {outName:outName,outId:outId,inName:inName,inId:inId}
+    }
+
+
     generateCircuit(inputValues){
 
         let circuit = new this.Circuit();
+        let machinesToConnect = []
+        circuit.addMachine("OFF",this.elementTypeMap['0'])
         this.elements.filter(element=>element.type!=="bar").forEach(element=>{
             circuit.addMachine(element.name,this.elementTypeMap[element.type])
+            machinesToConnect.push({name: element.name, unconnected: Array(element.getPortCount().input).fill(true)})
         })
         let inputs = this.elements.find(element => element.name === "output_bar")
         inputs.getPorts().map(port=>{
@@ -137,29 +174,20 @@ export default class LogicSimCore {
             circuit.addMachine(`C${port.id}`,this.elementTypeMap["buf"])
         })
         this.wires.forEach(wire=>{
-            let outName = wire.startPort.element.name
-            let outId = wire.startPort.id
-            if(outName==="output_bar"){
-                outName = `I${wire.startPort.id}`
-                outId = 0
-            }
-            else if(outName==="common_bar"){
-                outName = `C${wire.startPort.id}`
-                outId = 0
-            }
-            let inName = wire.endPort.element.name
-            let inId = wire.endPort.id
-            if(inName==="input_bar"){
-                inName = `O${wire.endPort.id}`
-                inId = 0
-            }
-            else if(inName==="common_bar"){
-                inName = `C${wire.endPort.id}`
-                inId = 0
-            }
-
-            circuit.addConnection(outName,outId,inName,inId)
+            let names = this.mapWireElementNames(wire)
+            circuit.addConnection(names.outName,names.outId,names.inName,names.inId)
+            let machine = machinesToConnect.find(x=>x.name === names.inName)
+            if(machine)
+                machine.unconnected[names.inId] = false
         })
+
+        machinesToConnect.forEach(machine=>{
+            machine.unconnected.forEach((c,i)=>{
+                if(c===true)
+                    circuit.addConnection('OFF',0,machine.name,i)
+            })
+        })
+
         return circuit;
     }
 
@@ -170,7 +198,6 @@ export default class LogicSimCore {
             display = true
         }
         let circuit = this.generateCircuit(inputValues)
-        try {
             const simulationResult = circuit.simulate();
             let outputValues = Array(inputValues.length).fill('0').map((x, i) => {
                 return simulationResult.state[`O${i}`][0]
@@ -178,19 +205,22 @@ export default class LogicSimCore {
             let commonValues = Array(inputValues.length).fill('0').map((x, i) => {
                 return simulationResult.state[`C${i}`][0]
             })
+
             if (display) {
+                this.simulationResult = simulationResult;
                 let outputs = this.elements.find(element => element.name === "input_bar")
                 outputs.portValues = outputValues.map(v => (+(!!v)).toString())
+                outputs.portValid = outputs.portValues.map((v,i) => v === inputValues[i])
                 let common = this.elements.find(element => element.name === "common_bar")
                 common.portValues = commonValues.map(v => (+(!!v)).toString())
+
+                this.wires.forEach(wire => {
+                    let names = this.mapWireElementNames(wire)
+                    wire.active = simulationResult.state[names.outName][names.outId]
+                })
             }
             outputValues = outputValues.map(v => v !== undefined ? (+v).toString() : "undefined")
             return outputValues.every((v, i) => v === inputValues[i])
-        }
-        catch (e) {
-
-            return false
-        }
 
     }
 
